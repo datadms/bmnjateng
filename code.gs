@@ -1,5 +1,6 @@
 /**
  * PORTAL DMS ENGINE V2 - BACKEND API (Google Apps Script)
+ * Tanpa modul Running Text / Crypto Ticker
  */
 
 function doGet(e) {
@@ -11,7 +12,6 @@ function doPost(e) {
 }
 
 function handleRequest(e) {
-  // CORS & Preflight / Header Handling
   var action = e && e.parameter ? e.parameter.action : "";
   var postData = {};
   
