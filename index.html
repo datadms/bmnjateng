@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal CRYPTO ALTEN</title>
+  <title>Portal DMS Engine V2</title>
 
   <!-- CDN Assets -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -43,15 +43,15 @@
     </div>
 
     <div>
-      <header class="w-full bg-[#111827] border border-[#1f2937] rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 mb-4 shadow-xl">
+      <header class="w-full bg-[#111827] border border-[#1f2937] rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 mb-6 shadow-xl">
         <div class="flex items-center space-x-3 cursor-pointer w-full md:w-auto justify-between md:justify-start" onclick="loadPage('ROOT')">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white font-extrabold shadow-lg">
-              <i class="fab fa-bitcoin"></i>
+            <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-extrabold shadow-lg">
+              <i class="fas fa-layer-group"></i>
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h1 class="text-sm font-extrabold text-white">Portal Crypto ALTEN</h1>
+                <h1 class="text-sm font-extrabold text-white">Portal DMS Engine</h1>
                 <span id="roleBadge" class="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">ROLE: UMUM</span>
               </div>
               <p id="userOwnerInfo" class="text-[11px] text-slate-400">@public_access</p>
@@ -258,8 +258,7 @@
   </div>
 
   <script>
-    // PERHATIAN: Ganti URL di bawah ini dengan deployment URL Apps Script terbaru Anda yang bersih!
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx6eYndUw61-CHQIR6RSzRPXPkJ3XVAwQtTPtPLts0WZimYKYEFHH_0_PHw75MR3Fbh/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbznUsNywp1Jwkkxj-rjrxmEwe_UCkFRu87s2MQy4qcCFWc9E8qvqsfoH7dfdFKwHFJ0/exec";
     
     let rootMenus = [];
     let usersList = [];
@@ -381,98 +380,87 @@
       }
 
       if (!menusToDisplay || menusToDisplay.length === 0) {
-        grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">Belum ada menu atau modul pada kategori ini.</div>`;
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-xs text-slate-500 italic">Belum ada menu atau sub-menu yang tersedia.</div>`;
         return;
       }
 
-      grid.innerHTML = menusToDisplay.map(menu => {
-        const isFolder = menu.type === 'folder';
-        const clickAction = isFolder ? `loadPage('${menu.id}', '${menu.title}')` : `window.open('${menu.targetUrl}', '_blank')`;
-        
-        let ownerBadge = menu.visibility !== 'UMUM' ? `<span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">${menu.visibility}</span>` : '';
-        let editDeleteControls = '';
-
-        if (currentUser && (currentUser.role === 'ADMIN' || currentUser.userId === menu.ownerUserId)) {
-          editDeleteControls = `
-            <div class="flex items-center gap-1 mt-3 pt-2 border-t border-[#1f2937]">
-              <button onclick="event.stopPropagation(); editMenu('${menu.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] rounded-lg font-bold"><i class="fas fa-edit mr-1"></i>Edit</button>
-              <button onclick="event.stopPropagation(); deleteMenu('${menu.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] rounded-lg font-bold"><i class="fas fa-trash mr-1"></i>Hapus</button>
-            </div>
-          `;
-        }
-
-        return `
-          <div onclick="${clickAction}" class="group bg-[#111827] border border-[#1f2937] hover:border-emerald-500/50 rounded-2xl p-5 shadow-lg transition-all cursor-pointer flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm group-hover:scale-110 transition-transform">
-                  <i class="${menu.iconClass || 'fas fa-link'}"></i>
-                </div>
-                ${ownerBadge}
-              </div>
-              <h3 class="font-bold text-white text-sm mb-1 group-hover:text-emerald-400 transition-colors">${menu.title}</h3>
-              <p class="text-[11px] text-slate-400 line-clamp-2">${menu.description || 'Tidak ada deskripsi.'}</p>
-            </div>
-            ${editDeleteControls}
-          </div>
-        `;
-      }).join('');
+      renderCards(menusToDisplay);
     }
 
-    function findMenuRecursive(menus, id) {
-      for (const m of menus) {
-        if (m.id === id) return m;
-        if (m.submenus && m.submenus.length > 0) {
-          const found = findMenuRecursive(m.submenus, id);
+    function findMenuRecursive(list, id) {
+      for (let item of list) {
+        if (item.id === id) return item;
+        if (item.submenus && item.submenus.length > 0) {
+          const found = findMenuRecursive(item.submenus, id);
           if (found) return found;
         }
       }
       return null;
     }
 
-    function handleSearch(keyword) {
-      if (!keyword.trim()) {
+    function renderCards(items) {
+      const grid = document.getElementById('cardsGrid');
+      grid.innerHTML = items.map(item => {
+        const isFolder = item.type === 'folder';
+        const actionAttr = isFolder ? `onclick="loadPage('${item.id}', '${item.title}')"` : `onclick="window.open('${item.targetUrl}', '_blank')"` ;
+        
+        let adminActionHtml = '';
+        if (currentUser && (currentUser.role === 'ADMIN' || currentUser.userId === item.ownerUserId)) {
+          adminActionHtml = `
+            <div class="flex items-center space-x-1 pt-2 border-t border-[#1f2937] mt-3 justify-end">
+              <button onclick="event.stopPropagation(); openCrudModal('${item.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg text-[10px] font-bold"><i class="fas fa-pen"></i> Edit</button>
+              <button onclick="event.stopPropagation(); executeDeleteMenu('${item.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg text-[10px] font-bold"><i class="fas fa-trash"></i> Hapus</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div ${actionAttr} class="group bg-[#111827] border border-[#1f2937] hover:border-emerald-500/50 rounded-2xl p-5 cursor-pointer transition-all shadow-xl flex flex-col justify-between hover:-translate-y-1">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+                  <i class="${item.iconClass || 'fas fa-link'}"></i>
+                </div>
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 uppercase">${item.category || 'GENERAL'}</span>
+              </div>
+              <h3 class="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">${item.title}</h3>
+              <p class="text-xs text-slate-400 mt-1.5 line-clamp-2">${item.description || 'Tidak ada deskripsi.'}</p>
+            </div>
+            ${adminActionHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleSearch(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) {
         loadPage(activePageId);
         return;
       }
-      const lower = keyword.toLowerCase();
-      let allFlat = [];
-      const flatten = (arr) => {
-        arr.forEach(item => {
-          allFlat.push(item);
-          if (item.submenus) flatten(item.submenus);
+      const searchRecursive = (list, results = []) => {
+        list.forEach(item => {
+          if (item.title.toLowerCase().includes(q) || (item.description && item.description.toLowerCase().includes(q))) {
+            results.push(item);
+          }
+          if (item.submenus && item.submenus.length > 0) {
+            searchRecursive(item.submenus, results);
+          }
         });
+        return results;
       };
-      flatten(rootMenus);
-
-      const filtered = allFlat.filter(m => m.title.toLowerCase().includes(lower) || (m.description && m.description.toLowerCase().includes(lower)));
-      const grid = document.getElementById('cardsGrid');
-      
-      if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">Modul tidak ditemukan.</div>`;
-        return;
-      }
-
-      grid.innerHTML = filtered.map(menu => `
-        <div onclick="window.open('${menu.targetUrl}', '_blank')" class="group bg-[#111827] border border-[#1f2937] hover:border-emerald-500/50 rounded-2xl p-5 shadow-lg transition-all cursor-pointer flex flex-col justify-between">
-          <div>
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm mb-3">
-              <i class="${menu.iconClass}"></i>
-            </div>
-            <h3 class="font-bold text-white text-sm mb-1">${menu.title}</h3>
-            <p class="text-[11px] text-slate-400">${menu.description}</p>
-          </div>
-        </div>
-      `).join('');
+      const foundResults = searchRecursive(rootMenus);
+      renderCards(foundResults);
     }
 
+    // Modal Control & Auth Handlers
     function handleAuthClick() {
       if (currentUser) {
-        if (confirm("Keluar dari sesi akun saat ini?")) {
+        if (confirm("Keluar dari sistem?")) {
           localStorage.removeItem('portal_currentUser');
           currentUser = null;
           sessionStorage.clear();
-          fetchData(true);
+          fetchData();
         }
       } else {
         document.getElementById('loginModal').classList.remove('hidden');
@@ -484,8 +472,7 @@
       e.preventDefault();
       const u = document.getElementById('loginUser').value;
       const p = document.getElementById('loginPass').value;
-      showGlobalSpinner("Autentikasi akun...");
-
+      showGlobalSpinner("Autentikasi...");
       try {
         const res = await fetch(GAS_API_URL, {
           method: 'POST',
@@ -493,30 +480,46 @@
         });
         const result = await res.json();
         hideGlobalSpinner();
-
         if (result.status === 'success') {
           currentUser = result.user;
           localStorage.setItem('portal_currentUser', JSON.stringify(currentUser));
-          closeLoginModal();
           sessionStorage.clear();
-          fetchData(true);
+          closeLoginModal();
+          fetchData();
         } else {
-          alert(result.message);
+          alert("Login gagal: " + result.message);
         }
       } catch (err) {
         hideGlobalSpinner();
-        alert("Gagal melakukan login.");
+        alert("Gagal terhubung ke server.");
       }
     }
 
-    function openCrudModal(isEdit = false) {
+    function openCrudModal(id = null) {
       document.getElementById('crudModal').classList.remove('hidden');
-      if (!isEdit) {
-        document.getElementById('crudModalTitle').innerText = "Tambah Menu Baru";
+      const isSub = activePageId !== "ROOT";
+      document.getElementById('formParentId').value = isSub ? activePageId : "";
+      if (id) {
+        document.getElementById('crudModalTitle').innerText = "Edit Menu";
+        const item = findMenuRecursive(rootMenus, id);
+        if (item) {
+          document.getElementById('formId').value = item.id;
+          document.getElementById('formTitle').value = item.title;
+          document.getElementById('formCategory').value = item.category;
+          document.getElementById('formVisibility').value = item.visibility;
+          document.getElementById('formType').value = item.type;
+          document.getElementById('formIcon').value = item.iconClass;
+          document.getElementById('formUrl').value = item.targetUrl;
+          document.getElementById('formDesc').value = item.description;
+        }
+      } else {
+        document.getElementById('crudModalTitle').innerText = isSub ? "Tambah Sub Menu" : "Tambah Menu Utama";
         document.getElementById('formId').value = "";
-        document.getElementById('formParentId').value = activePageId === "ROOT" ? "" : activePageId;
         document.getElementById('formTitle').value = "";
         document.getElementById('formCategory').value = "";
+        document.getElementById('formVisibility').value = "UMUM";
+        document.getElementById('formType').value = "link";
+        document.getElementById('formIcon').value = "fas fa-link";
         document.getElementById('formUrl').value = "#";
         document.getElementById('formDesc').value = "";
       }
@@ -526,7 +529,7 @@
     async function executeSaveMenu(e) {
       e.preventDefault();
       const payload = {
-        action: "saveMenu",
+        action: 'saveMenu',
         id: document.getElementById('formId').value,
         parentId: document.getElementById('formParentId').value,
         title: document.getElementById('formTitle').value,
@@ -538,109 +541,74 @@
         description: document.getElementById('formDesc').value,
         ownerUserId: currentUser ? currentUser.userId : "PUBLIC"
       };
-
       showGlobalSpinner("Menyimpan menu...");
       try {
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
         hideGlobalSpinner();
         if (result.status === 'success') {
           closeCrudModal();
           sessionStorage.clear();
-          fetchData(true);
+          fetchData();
         } else {
-          alert("Gagal menyimpan menu: " + result.message);
+          alert("Gagal menyimpan: " + result.message);
         }
       } catch (err) {
         hideGlobalSpinner();
-        alert("Gagal terhubung ke server backend.");
+        alert("Gagal terhubung.");
       }
     }
 
-    function editMenu(menuId) {
-      let allFlat = [];
-      const flatten = (arr) => {
-        arr.forEach(item => {
-          allFlat.push(item);
-          if (item.submenus) flatten(item.submenus);
-        });
-      };
-      flatten(rootMenus);
-
-      const menu = allFlat.find(m => m.id === menuId);
-      if (!menu) return;
-
-      document.getElementById('crudModalTitle').innerText = "Edit Menu / Modul";
-      document.getElementById('formId').value = menu.id;
-      document.getElementById('formParentId').value = menu.parentId || "";
-      document.getElementById('formTitle').value = menu.title;
-      document.getElementById('formCategory').value = menu.category || "";
-      document.getElementById('formVisibility').value = menu.visibility || "UMUM";
-      document.getElementById('formType').value = menu.type || "link";
-      document.getElementById('formIcon').value = menu.iconClass || "fas fa-link";
-      document.getElementById('formUrl').value = menu.targetUrl || "#";
-      document.getElementById('formDesc').value = menu.description || "";
-      document.getElementById('crudModal').classList.remove('hidden');
-    }
-
-    async function deleteMenu(menuId) {
-      if (!confirm("Apakah Anda yakin ingin menghapus menu ini?")) return;
+    async function executeDeleteMenu(id) {
+      if (!confirm("Hapus menu ini secara permanen?")) return;
       showGlobalSpinner("Menghapus menu...");
       try {
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'deleteMenu', id: menuId })
-        });
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMenu', id: id }) });
         const result = await res.json();
         hideGlobalSpinner();
         if (result.status === 'success') {
           sessionStorage.clear();
-          fetchData(true);
+          fetchData();
         } else {
           alert("Gagal menghapus: " + result.message);
         }
       } catch (err) {
         hideGlobalSpinner();
-        alert("Terjadi kesalahan koneksi.");
+        alert("Gagal terhubung.");
       }
     }
 
-    function openUserManagementModal() {
+    async function openUserManagementModal() {
       document.getElementById('userManagementModal').classList.remove('hidden');
-      fetchUsersList();
-    }
-    function closeUserManagementModal() { document.getElementById('userManagementModal').classList.add('hidden'); }
-
-    async function fetchUsersList() {
+      showGlobalSpinner("Memuat data user...");
       try {
         const res = await fetch(`${GAS_API_URL}?action=getUsers&_t=${Date.now()}`);
         const result = await res.json();
+        hideGlobalSpinner();
         if (result.status === 'success') {
           usersList = result.data;
-          renderUsersTable();
+          renderUserTable();
+        } else {
+          alert("Gagal memuat user: " + result.message);
         }
       } catch (err) {
-        console.error("Gagal memuat daftar user", err);
+        hideGlobalSpinner();
+        alert("Gagal terhubung.");
       }
     }
+    function closeUserManagementModal() { document.getElementById('userManagementModal').classList.add('hidden'); }
 
-    function renderUsersTable() {
+    function renderUserTable() {
       const tbody = document.getElementById('userTableBody');
-      if (!usersList.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500 italic">Belum ada user terdaftar.</td></tr>`;
-        return;
-      }
       tbody.innerHTML = usersList.map(u => `
-        <tr class="border-b border-[#1f2937] hover:bg-slate-900/50">
-          <td class="p-3 font-mono text-slate-400">${u.userId}</td>
-          <td class="p-3 font-bold text-white">${u.username}</td>
+        <tr class="hover:bg-slate-900/50">
+          <td class="p-3 font-bold text-slate-200">${u.userId}</td>
+          <td class="p-3 text-slate-300">@${u.username}</td>
           <td class="p-3 text-slate-300">${u.fullName}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-slate-800 text-slate-300'}">${u.role}</span></td>
-          <td class="p-3 text-center">
-            <button onclick="deleteUser('${u.userId}')" class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] rounded font-bold"><i class="fas fa-trash"></i></button>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">${u.role}</span></td>
+          <td class="p-3 text-center space-x-1">
+            <button onclick="editUser('${u.userId}')" class="px-2 py-1 bg-slate-800 text-emerald-400 rounded text-[10px] font-bold"><i class="fas fa-pen"></i></button>
+            <button onclick="deleteUser('${u.userId}')" class="px-2 py-1 bg-slate-800 text-rose-400 rounded text-[10px] font-bold"><i class="fas fa-trash"></i></button>
           </td>
         </tr>
       `).join('');
@@ -648,62 +616,69 @@
 
     function openUserFormModal() {
       document.getElementById('userFormModal').classList.remove('hidden');
-      document.getElementById('userFormId').value = "USR-" + Math.floor(100 + Math.random() * 900);
+      document.getElementById('userFormTitle').innerText = "Tambah User Baru";
+      document.getElementById('userFormId').value = "USR-" + Date.now().toString().slice(-4);
       document.getElementById('userFormUsername').value = "";
       document.getElementById('userFormPassword').value = "";
       document.getElementById('userFormFullName').value = "";
+      document.getElementById('userFormRole').value = "USER_KHUSUS";
     }
     function closeUserFormModal() { document.getElementById('userFormModal').classList.add('hidden'); }
+
+    function editUser(userId) {
+      const u = usersList.find(x => x.userId === userId);
+      if (!u) return;
+      document.getElementById('userFormModal').classList.remove('hidden');
+      document.getElementById('userFormTitle').innerText = "Edit User";
+      document.getElementById('userFormId').value = u.userId;
+      document.getElementById('userFormUsername').value = u.username;
+      document.getElementById('userFormPassword').value = u.password;
+      document.getElementById('userFormFullName').value = u.fullName;
+      document.getElementById('userFormRole').value = u.role;
+    }
 
     async function executeSaveUser(e) {
       e.preventDefault();
       const payload = {
-        action: "saveUser",
+        action: 'saveUser',
         userId: document.getElementById('userFormId').value,
         username: document.getElementById('userFormUsername').value,
         password: document.getElementById('userFormPassword').value,
         fullName: document.getElementById('userFormFullName').value,
         role: document.getElementById('userFormRole').value
       };
-
       showGlobalSpinner("Menyimpan user...");
       try {
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
         hideGlobalSpinner();
         if (result.status === 'success') {
           closeUserFormModal();
-          fetchUsersList();
+          openUserManagementModal();
         } else {
-          alert("Gagal menyimpan user: " + result.message);
+          alert("Gagal: " + result.message);
         }
       } catch (err) {
         hideGlobalSpinner();
-        alert("Terjadi kesalahan koneksi.");
+        alert("Gagal terhubung.");
       }
     }
 
     async function deleteUser(userId) {
-      if (!confirm(`Hapus user dengan ID ${userId}?`)) return;
+      if (!confirm("Hapus user ini?")) return;
       showGlobalSpinner("Menghapus user...");
       try {
-        const res = await fetch(GAS_API_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'deleteUser', userId: userId })
-        });
+        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteUser', userId: userId }) });
         const result = await res.json();
         hideGlobalSpinner();
         if (result.status === 'success') {
-          fetchUsersList();
+          openUserManagementModal();
         } else {
-          alert("Gagal menghapus user: " + result.message);
+          alert("Gagal: " + result.message);
         }
       } catch (err) {
         hideGlobalSpinner();
-        alert("Terjadi kesalahan koneksi.");
+        alert("Gagal terhubung.");
       }
     }
   </script>
